@@ -9,15 +9,26 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import ru.macdroid.ollama.data.local.llm.LlmEngine
+import ru.macdroid.ollama.data.local.llm.LocalLlmEngine
+import ru.macdroid.ollama.data.local.llm.ModelManager
+import ru.macdroid.ollama.data.local.llm.ModelManagerContract
+import ru.macdroid.ollama.data.local.preferences.SettingsPreferences
 import ru.macdroid.ollama.data.remote.OllamaApi
 import ru.macdroid.ollama.data.repository.ChatRepositoryImpl
+import ru.macdroid.ollama.data.repository.CompositeChatRepository
+import ru.macdroid.ollama.data.repository.LocalChatRepositoryImpl
 import ru.macdroid.ollama.domain.repository.ChatRepository
 import ru.macdroid.ollama.presentation.chat.ChatViewModel
+import ru.macdroid.ollama.presentation.settings.SettingsViewModel
 import java.util.concurrent.TimeUnit
 
 val appModule = module {
+    // JSON Serializer
     single {
         Json {
             ignoreUnknownKeys = true
@@ -25,6 +36,7 @@ val appModule = module {
         }
     }
 
+    // HTTP Client
     single {
         HttpClient(OkHttp) {
             engine {
@@ -48,9 +60,28 @@ val appModule = module {
         }
     }
 
+    // Preferences
+    single { SettingsPreferences(androidContext()) }
+
+    // Remote API
     single { OllamaApi(get(), get()) }
 
-    single<ChatRepository> { ChatRepositoryImpl(get()) }
+    // Local LLM
+    single<LlmEngine> { LocalLlmEngine(androidContext()) }
+    single<ModelManagerContract> { ModelManager(androidContext()) }
 
-    viewModel { ChatViewModel(get()) }
+    // Repositories
+    single<ChatRepository>(named("remote")) { ChatRepositoryImpl(get()) }
+    single<ChatRepository>(named("local")) { LocalChatRepositoryImpl(get(), get()) }
+    single<ChatRepository> {
+        CompositeChatRepository(
+            localRepository = get(named("local")),
+            remoteRepository = get(named("remote")),
+            settingsPreferences = get()
+        )
+    }
+
+    // ViewModels
+    viewModel { ChatViewModel(get(), get()) }
+    viewModel { SettingsViewModel(get(), get(), get()) }
 }

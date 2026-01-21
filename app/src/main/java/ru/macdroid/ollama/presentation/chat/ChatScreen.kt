@@ -18,6 +18,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,7 +35,6 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,16 +49,22 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import ru.macdroid.ollama.R
+import ru.macdroid.ollama.data.repository.LlmMode
 import ru.macdroid.ollama.domain.model.Message
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
+    onNavigateToSettings: () -> Unit,
     viewModel: ChatViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.onIntent(ChatIntent.RefreshLlmMode)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -77,7 +88,23 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Ollama Chat") }
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("Ollama Chat")
+                        LlmModeChip(mode = state.llmMode)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
+                    }
+                }
             )
         },
         snackbarHost = {
@@ -106,7 +133,7 @@ fun ChatScreen(
             ) {
                 items(
                     items = state.messages,
-                    key = { it.timestamp }
+                    key = { it.id }
                 ) { message ->
                     MessageBubble(message = message)
                 }
@@ -127,6 +154,38 @@ fun ChatScreen(
             )
         }
     }
+}
+
+@Composable
+private fun LlmModeChip(mode: LlmMode) {
+    AssistChip(
+        onClick = { },
+        label = {
+            Text(
+                text = when (mode) {
+                    LlmMode.Local -> "Local"
+                    LlmMode.Remote -> "Remote"
+                },
+                style = MaterialTheme.typography.labelSmall
+            )
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = when (mode) {
+                    LlmMode.Local -> Icons.Default.PhoneAndroid
+                    LlmMode.Remote -> Icons.Default.Cloud
+                },
+                contentDescription = null,
+                modifier = Modifier.size(16.dp)
+            )
+        },
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = when (mode) {
+                LlmMode.Local -> MaterialTheme.colorScheme.primaryContainer
+                LlmMode.Remote -> MaterialTheme.colorScheme.secondaryContainer
+            }
+        )
+    )
 }
 
 @Composable

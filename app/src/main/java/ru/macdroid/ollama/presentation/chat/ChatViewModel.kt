@@ -7,16 +7,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.macdroid.ollama.data.local.preferences.SettingsPreferences
+import ru.macdroid.ollama.data.repository.LlmMode
 import ru.macdroid.ollama.domain.model.Message
 import ru.macdroid.ollama.domain.repository.ChatRepository
 
 class ChatViewModel(
-    private val repository: ChatRepository
+    private val repository: ChatRepository,
+    private val settingsPreferences: SettingsPreferences
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ChatState())
@@ -25,16 +29,29 @@ class ChatViewModel(
     private val _effect = Channel<ChatEffect>()
     val effect = _effect.receiveAsFlow()
 
+    init {
+        refreshLlmMode()
+    }
+
     fun onIntent(intent: ChatIntent) {
         when (intent) {
             is ChatIntent.UpdateInput -> updateInput(intent.text)
             is ChatIntent.SendMessage -> sendMessage()
             is ChatIntent.DismissError -> dismissError()
+            is ChatIntent.RefreshLlmMode -> refreshLlmMode()
         }
     }
 
     private fun updateInput(text: String) {
         _state.update { it.copy(inputText = text) }
+    }
+
+    private fun refreshLlmMode() {
+        viewModelScope.launch {
+            val useLocal = settingsPreferences.useLocalLlm.first()
+            val mode = if (useLocal) LlmMode.Local else LlmMode.Remote
+            _state.update { it.copy(llmMode = mode) }
+        }
     }
 
     private fun sendMessage() {
@@ -72,7 +89,7 @@ class ChatViewModel(
                         it.copy(
                             error = e.message ?: "Unknown error",
                             isLoading = false,
-                            messages = it.messages.dropLast(1) // Remove empty assistant message
+                            messages = it.messages.dropLast(1)
                         )
                     }
                 }

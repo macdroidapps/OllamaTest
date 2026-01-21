@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import ru.macdroid.ollama.presentation.chat.ChatScreen
+import ru.macdroid.ollama.navigation.OllamaNavGraph
 import ru.macdroid.ollama.ui.theme.OllamaTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             OllamaTheme {
-                ChatScreen()
+                OllamaNavGraph()
             }
         }
     }

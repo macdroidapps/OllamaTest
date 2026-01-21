@@ -21,4 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Ollama"
 include(":app")
+include(":llama-lib")
  
