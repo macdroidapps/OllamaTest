@@ -27,8 +27,22 @@ interface InferenceEngine {
 
     /**
      * Sends a user prompt to the loaded model and returns a Flow of generated tokens.
+     *
+     * @param message The user prompt text
+     * @param predictLength Maximum number of tokens to generate
+     * @param temperature Controls randomness (0.1-1.5, higher = more random)
+     * @param topP Nucleus sampling threshold (0.1-1.0)
+     * @param topK Number of top tokens to consider (1-100)
+     * @param repeatPenalty Penalty for repeating tokens (1.0-2.0)
      */
-    fun sendUserPrompt(message: String, predictLength: Int = DEFAULT_PREDICT_LENGTH): Flow<String>
+    fun sendUserPrompt(
+        message: String,
+        predictLength: Int = DEFAULT_PREDICT_LENGTH,
+        temperature: Float = DEFAULT_TEMPERATURE,
+        topP: Float = DEFAULT_TOP_P,
+        topK: Int = DEFAULT_TOP_K,
+        repeatPenalty: Float = DEFAULT_REPEAT_PENALTY
+    ): Flow<String>
 
     /**
      * Runs a benchmark with the specified parameters.
@@ -68,6 +82,10 @@ interface InferenceEngine {
 
     companion object {
         const val DEFAULT_PREDICT_LENGTH = 1024
+        const val DEFAULT_TEMPERATURE = 0.7f
+        const val DEFAULT_TOP_P = 0.9f
+        const val DEFAULT_TOP_K = 40
+        const val DEFAULT_REPEAT_PENALTY = 1.1f
     }
 }
 

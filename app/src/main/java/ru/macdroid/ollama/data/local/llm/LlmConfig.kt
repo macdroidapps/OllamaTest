@@ -8,7 +8,8 @@ data class LlmConfig(
     val topP: Float = 0.9f,
     val topK: Int = 40,
     val repeatPenalty: Float = 1.1f,
-    val maxTokens: Int = 512
+    val maxTokens: Int = 512,
+    val promptTemplate: PromptTemplate = PromptTemplate.DEFAULT
 ) {
     companion object {
         val DEFAULT = LlmConfig()

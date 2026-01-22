@@ -16,6 +16,7 @@ import ru.macdroid.ollama.data.local.llm.LlmEngine
 import ru.macdroid.ollama.data.local.llm.ModelDownloadState
 import ru.macdroid.ollama.data.local.llm.ModelManager
 import ru.macdroid.ollama.data.local.llm.ModelManagerContract
+import ru.macdroid.ollama.data.local.llm.PromptTemplate
 import ru.macdroid.ollama.data.local.preferences.SettingsPreferences
 
 class SettingsViewModel(
@@ -47,6 +48,13 @@ class SettingsViewModel(
             is SettingsIntent.UpdateServerUrl -> updateServerUrl(intent.url)
             is SettingsIntent.DismissError -> dismissError()
             is SettingsIntent.NavigateBack -> navigateBack()
+            // LLM Generation Parameters
+            is SettingsIntent.UpdateTemperature -> updateTemperature(intent.value)
+            is SettingsIntent.UpdateTopP -> updateTopP(intent.value)
+            is SettingsIntent.UpdateTopK -> updateTopK(intent.value)
+            is SettingsIntent.UpdateRepeatPenalty -> updateRepeatPenalty(intent.value)
+            is SettingsIntent.UpdateMaxTokens -> updateMaxTokens(intent.value)
+            is SettingsIntent.UpdatePromptTemplate -> updatePromptTemplate(intent.template)
         }
     }
 
@@ -59,13 +67,28 @@ class SettingsViewModel(
             val isModelAvailable = modelManager.isModelAvailable()
             val modelInfo = modelManager.getModelInfo()
 
+            // Load LLM generation parameters
+            val temperature = settingsPreferences.temperature.first()
+            val topP = settingsPreferences.topP.first()
+            val topK = settingsPreferences.topK.first()
+            val repeatPenalty = settingsPreferences.repeatPenalty.first()
+            val maxTokens = settingsPreferences.maxTokens.first()
+            val promptTemplateName = settingsPreferences.promptTemplate.first()
+
             _state.update {
                 it.copy(
                     useLocalLlm = useLocalLlm,
                     ollamaServerUrl = serverUrl,
                     isModelAvailable = isModelAvailable,
                     modelInfo = modelInfo,
-                    isCheckingModel = false
+                    isCheckingModel = false,
+                    // LLM parameters
+                    temperature = temperature,
+                    topP = topP,
+                    topK = topK,
+                    repeatPenalty = repeatPenalty,
+                    maxTokens = maxTokens,
+                    promptTemplate = PromptTemplate.fromName(promptTemplateName)
                 )
             }
         }
@@ -202,6 +225,49 @@ class SettingsViewModel(
 
     private fun dismissError() {
         _state.update { it.copy(error = null) }
+    }
+
+    // LLM Generation Parameter Update Functions
+    private fun updateTemperature(value: Float) {
+        viewModelScope.launch {
+            settingsPreferences.setTemperature(value)
+            _state.update { it.copy(temperature = value) }
+        }
+    }
+
+    private fun updateTopP(value: Float) {
+        viewModelScope.launch {
+            settingsPreferences.setTopP(value)
+            _state.update { it.copy(topP = value) }
+        }
+    }
+
+    private fun updateTopK(value: Int) {
+        viewModelScope.launch {
+            settingsPreferences.setTopK(value)
+            _state.update { it.copy(topK = value) }
+        }
+    }
+
+    private fun updateRepeatPenalty(value: Float) {
+        viewModelScope.launch {
+            settingsPreferences.setRepeatPenalty(value)
+            _state.update { it.copy(repeatPenalty = value) }
+        }
+    }
+
+    private fun updateMaxTokens(value: Int) {
+        viewModelScope.launch {
+            settingsPreferences.setMaxTokens(value)
+            _state.update { it.copy(maxTokens = value) }
+        }
+    }
+
+    private fun updatePromptTemplate(template: PromptTemplate) {
+        viewModelScope.launch {
+            settingsPreferences.setPromptTemplate(template)
+            _state.update { it.copy(promptTemplate = template) }
+        }
     }
 
     private fun navigateBack() {

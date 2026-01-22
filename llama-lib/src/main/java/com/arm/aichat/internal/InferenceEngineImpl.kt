@@ -98,7 +98,14 @@ internal class InferenceEngineImpl private constructor(
     private external fun processSystemPrompt(systemPrompt: String): Int
 
     @FastNative
-    private external fun processUserPrompt(userPrompt: String, predictLength: Int): Int
+    private external fun processUserPrompt(
+        userPrompt: String,
+        predictLength: Int,
+        temperature: Float,
+        topP: Float,
+        topK: Int,
+        repeatPenalty: Float
+    ): Int
 
     @FastNative
     private external fun generateNextToken(): String?
@@ -217,6 +224,10 @@ internal class InferenceEngineImpl private constructor(
     override fun sendUserPrompt(
         message: String,
         predictLength: Int,
+        temperature: Float,
+        topP: Float,
+        topK: Int,
+        repeatPenalty: Float
     ): Flow<String> = flow {
         require(message.isNotEmpty()) { "User prompt discarded due to being empty!" }
         check(_state.value is InferenceEngine.State.ModelReady) {
@@ -224,11 +235,11 @@ internal class InferenceEngineImpl private constructor(
         }
 
         try {
-            Log.i(TAG, "Sending user prompt...")
+            Log.i(TAG, "Sending user prompt with temp=$temperature, topP=$topP, topK=$topK, repeatPenalty=$repeatPenalty")
             _readyForSystemPrompt = false
             _state.value = InferenceEngine.State.ProcessingUserPrompt
 
-            processUserPrompt(message, predictLength).let { result ->
+            processUserPrompt(message, predictLength, temperature, topP, topK, repeatPenalty).let { result ->
                 if (result != 0) {
                     Log.e(TAG, "Failed to process user prompt: $result")
                     return@flow

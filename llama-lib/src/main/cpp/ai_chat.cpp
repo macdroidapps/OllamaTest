@@ -104,9 +104,12 @@ static llama_context *init_context(llama_model *model, const int n_ctx = DEFAULT
     return context;
 }
 
-static common_sampler *new_sampler(float temp) {
+static common_sampler *new_sampler(float temp, float top_p, int top_k, float repeat_penalty) {
     common_params_sampling sparams;
     sparams.temp = temp;
+    sparams.top_p = top_p;
+    sparams.top_k = top_k;
+    sparams.penalty_repeat = repeat_penalty;
     return common_sampler_init(g_model, sparams);
 }
 
@@ -118,7 +121,8 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_prepare(JNIEnv * /*env*/, jobje
     g_context = context;
     g_batch = llama_batch_init(BATCH_SIZE, 0, 1);
     g_chat_templates = common_chat_templates_init(g_model, "");
-    g_sampler = new_sampler(DEFAULT_SAMPLER_TEMP);
+    // Create initial sampler with defaults - will be recreated with user params in processUserPrompt
+    g_sampler = new_sampler(DEFAULT_SAMPLER_TEMP, 0.9f, 40, 1.1f);
     return 0;
 }
 
@@ -405,10 +409,22 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_processUserPrompt(
         JNIEnv *env,
         jobject /*unused*/,
         jstring juser_prompt,
-        jint n_predict
+        jint n_predict,
+        jfloat temperature,
+        jfloat top_p,
+        jint top_k,
+        jfloat repeat_penalty
 ) {
     // Reset short-term states
     reset_short_term_states();
+
+    // Recreate sampler with user-provided parameters
+    if (g_sampler) {
+        common_sampler_free(g_sampler);
+    }
+    g_sampler = new_sampler(temperature, top_p, top_k, repeat_penalty);
+    LOGi("%s: Sampler updated - temp=%.2f, top_p=%.2f, top_k=%d, repeat_penalty=%.2f",
+         __func__, temperature, top_p, top_k, repeat_penalty);
 
     // Obtain and tokenize user prompt
     const auto *const user_prompt = env->GetStringUTFChars(juser_prompt, nullptr);

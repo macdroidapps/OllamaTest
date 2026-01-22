@@ -22,13 +22,18 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -55,6 +61,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.koin.androidx.compose.koinViewModel
+import ru.macdroid.ollama.data.local.llm.PromptTemplate
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -140,6 +148,23 @@ fun SettingsScreen(
                 onCancel = { viewModel.onIntent(SettingsIntent.CancelDownload) },
                 onDelete = { showDeleteDialog = true }
             )
+
+            // LLM Parameters Section (only visible when local LLM is enabled)
+            if (state.useLocalLlm || state.isModelAvailable) {
+                HorizontalDivider()
+
+                LlmParametersSection(
+                    temperature = state.temperature,
+                    topP = state.topP,
+                    maxTokens = state.maxTokens,
+                    promptTemplate = state.promptTemplate,
+                    enabled = state.useLocalLlm,
+                    onTemperatureChange = { viewModel.onIntent(SettingsIntent.UpdateTemperature(it)) },
+                    onTopPChange = { viewModel.onIntent(SettingsIntent.UpdateTopP(it)) },
+                    onMaxTokensChange = { viewModel.onIntent(SettingsIntent.UpdateMaxTokens(it)) },
+                    onPromptTemplateChange = { viewModel.onIntent(SettingsIntent.UpdatePromptTemplate(it)) }
+                )
+            }
 
             HorizontalDivider()
 
@@ -432,6 +457,223 @@ private fun RemoteServerSection(
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LlmParametersSection(
+    temperature: Float,
+    topP: Float,
+    maxTokens: Int,
+    promptTemplate: PromptTemplate,
+    enabled: Boolean,
+    onTemperatureChange: (Float) -> Unit,
+    onTopPChange: (Float) -> Unit,
+    onMaxTokensChange: (Int) -> Unit,
+    onPromptTemplateChange: (PromptTemplate) -> Unit
+) {
+    var templateExpanded by remember { mutableStateOf(false) }
+
+    Column {
+        Text(
+            text = "LLM Parameters",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = if (enabled) {
+                    MaterialTheme.colorScheme.surface
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                }
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Tune,
+                        contentDescription = null,
+                        tint = if (enabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Generation Settings",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = if (enabled) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Temperature Slider
+                SliderSetting(
+                    label = "Temperature",
+                    value = temperature,
+                    valueRange = 0.1f..1.5f,
+                    valueText = String.format("%.2f", temperature),
+                    enabled = enabled,
+                    onValueChange = onTemperatureChange,
+                    description = "Higher = more creative, Lower = more focused"
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Top P Slider
+                SliderSetting(
+                    label = "Top P",
+                    value = topP,
+                    valueRange = 0.1f..1.0f,
+                    valueText = String.format("%.2f", topP),
+                    enabled = enabled,
+                    onValueChange = onTopPChange,
+                    description = "Nucleus sampling threshold"
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Max Tokens Slider
+                SliderSetting(
+                    label = "Max Tokens",
+                    value = maxTokens.toFloat(),
+                    valueRange = 64f..2048f,
+                    valueText = maxTokens.toString(),
+                    enabled = enabled,
+                    onValueChange = { onMaxTokensChange(it.roundToInt()) },
+                    description = "Maximum response length"
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Prompt Template Dropdown
+                Text(
+                    text = "Prompt Template",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = if (enabled) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                ExposedDropdownMenuBox(
+                    expanded = templateExpanded && enabled,
+                    onExpandedChange = { if (enabled) templateExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = promptTemplate.displayName,
+                        onValueChange = {},
+                        readOnly = true,
+                        enabled = enabled,
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = templateExpanded)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled)
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = templateExpanded && enabled,
+                        onDismissRequest = { templateExpanded = false }
+                    ) {
+                        PromptTemplate.entries.forEach { template ->
+                            DropdownMenuItem(
+                                text = { Text(template.displayName) },
+                                onClick = {
+                                    onPromptTemplateChange(template)
+                                    templateExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                if (!enabled) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Enable local LLM to adjust parameters",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SliderSetting(
+    label: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    valueText: String,
+    enabled: Boolean,
+    onValueChange: (Float) -> Unit,
+    description: String
+) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                }
+            )
+            Text(
+                text = valueText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                }
+            )
+        }
+
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = valueRange,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

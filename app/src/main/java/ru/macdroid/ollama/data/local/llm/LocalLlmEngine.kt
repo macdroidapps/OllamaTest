@@ -29,6 +29,8 @@ class LocalLlmEngine(
 
     private var systemPromptSet = false
 
+    private var currentConfig: LlmConfig = LlmConfig.DEFAULT
+
     override suspend fun loadModel(modelPath: String, config: LlmConfig): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
@@ -39,8 +41,9 @@ class LocalLlmEngine(
 
                 inferenceEngine.loadModel(modelPath)
 
-                // Set system prompt after loading model
-                val systemPrompt = buildSystemPrompt()
+                // Set system prompt from config's prompt template
+                currentConfig = config
+                val systemPrompt = config.promptTemplate.systemPrompt
                 inferenceEngine.setSystemPrompt(systemPrompt)
                 systemPromptSet = true
 
@@ -58,7 +61,11 @@ class LocalLlmEngine(
 
         return inferenceEngine.sendUserPrompt(
             message = prompt,
-            predictLength = config.maxTokens
+            predictLength = config.maxTokens,
+            temperature = config.temperature,
+            topP = config.topP,
+            topK = config.topK,
+            repeatPenalty = config.repeatPenalty
         ).catch { e ->
             throw Exception("LLM generation error: ${e.message}", e)
         }.flowOn(Dispatchers.IO)
@@ -73,13 +80,6 @@ class LocalLlmEngine(
 
     override fun isModelLoaded(): Boolean {
         return inferenceEngine.state.value.isModelLoaded
-    }
-
-    private fun buildSystemPrompt(): String {
-        return """You are a helpful AI assistant running locally on an Android device.
-            |You provide concise, accurate, and helpful responses.
-            |You are powered by a quantized language model optimized for mobile devices.
-            |Keep your responses brief but informative.""".trimMargin()
     }
 
     companion object {
