@@ -40,6 +40,15 @@ enum class PromptTemplate(
         systemPrompt = """Ты - полезный AI-ассистент.
             |Отвечай кратко и по делу на русском языке.
             |Будь точным и информативным.""".trimMargin()
+    ),
+
+    ANALYTICS(
+        displayName = "Data Analyst",
+        systemPrompt = """You are a data analyst assistant.
+            |Analyze data and answer questions based ONLY on the provided context.
+            |Be concise and use specific numbers from the data.
+            |If you cannot answer a question from the provided data, say so clearly.
+            |Format numbers appropriately and highlight key insights.""".trimMargin()
     );
 
     companion object {

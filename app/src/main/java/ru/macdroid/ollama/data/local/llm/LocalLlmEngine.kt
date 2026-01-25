@@ -17,6 +17,7 @@ interface LlmEngine {
     fun generate(prompt: String, config: LlmConfig = LlmConfig.DEFAULT): Flow<String>
     suspend fun unloadModel()
     fun isModelLoaded(): Boolean
+    suspend fun updateSystemPrompt(systemPrompt: String)
 }
 
 class LocalLlmEngine(
@@ -80,6 +81,13 @@ class LocalLlmEngine(
 
     override fun isModelLoaded(): Boolean {
         return inferenceEngine.state.value.isModelLoaded
+    }
+
+    override suspend fun updateSystemPrompt(systemPrompt: String) {
+        withContext(Dispatchers.IO) {
+            inferenceEngine.setSystemPrompt(systemPrompt)
+            systemPromptSet = true
+        }
     }
 
     companion object {

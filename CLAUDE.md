@@ -53,21 +53,30 @@ Presentation (MVI)          Domain                  Data
 
 **Composite Repository**: `CompositeChatRepository` routes requests to either `LocalChatRepositoryImpl` or `ChatRepositoryImpl` based on user preference stored in DataStore.
 
-**DI with Koin**: All dependencies configured in `di/AppModule.kt`. Named qualifiers differentiate local vs remote repository implementations.
+**DI with Koin**: All dependencies configured in `di/AppModule.kt`. Named qualifiers (`named("local")`, `named("remote")`) differentiate repository implementations.
 
 ### llama-lib Integration
 
 The native library uses JNI to bridge Kotlin to llama.cpp C++ code:
-- `AiChat.kt` - Main singleton entry point
-- `InferenceEngine.kt` - Interface for LLM operations
-- `ai_chat.cpp` - JNI bridge implementation
+- `llama-lib/.../AiChat.kt` - Main singleton entry point (`AiChat.getInferenceEngine(context)`)
+- `llama-lib/.../InferenceEngine.kt` - Interface with state machine for model loading/inference
+- `llama-lib/src/main/cpp/ai_chat.cpp` - JNI bridge implementation
 - Builds against llama.cpp submodule via CMake
 
 **Build flags** (configured in `llama-lib/build.gradle.kts`):
 - `GGML_NATIVE=OFF` - Disable host-specific optimizations
 - `GGML_BACKEND_DL=ON` - Dynamic backend loading
 - `GGML_CPU_ALL_VARIANTS=ON` - Support all CPU variants
-- KleidiAI enabled for ARM64 optimizations
+- KleidiAI enabled for ARM64 optimizations (set in CMakeLists.txt)
+
+### Inference Configuration
+
+`LlmConfig` provides configurable sampling parameters:
+- `temperature`, `topP`, `topK`, `repeatPenalty` - Standard LLM sampling
+- `contextSize`, `threads`, `gpuLayers` - Resource allocation
+- `LlmConfig.forDevice(availableMemoryMb)` - Auto-tuning based on device memory
+
+`PromptTemplate` enum provides preset system prompts: ASSISTANT, CREATIVE, PRECISE, CODING, RUSSIAN.
 
 ### Data Flow (Local Mode)
 

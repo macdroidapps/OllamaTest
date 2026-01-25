@@ -19,10 +19,17 @@ import ru.macdroid.ollama.data.local.llm.ModelManager
 import ru.macdroid.ollama.data.local.llm.ModelManagerContract
 import ru.macdroid.ollama.data.local.preferences.SettingsPreferences
 import ru.macdroid.ollama.data.remote.OllamaApi
+import ru.macdroid.ollama.data.local.analytics.ContextBuilder
+import ru.macdroid.ollama.data.local.analytics.DataSampler
+import ru.macdroid.ollama.data.local.analytics.StatisticsCalculator
+import ru.macdroid.ollama.data.local.analytics.TokenBudgetManager
+import ru.macdroid.ollama.data.repository.AnalyticsRepositoryImpl
 import ru.macdroid.ollama.data.repository.ChatRepositoryImpl
 import ru.macdroid.ollama.data.repository.CompositeChatRepository
 import ru.macdroid.ollama.data.repository.LocalChatRepositoryImpl
+import ru.macdroid.ollama.domain.repository.AnalyticsRepository
 import ru.macdroid.ollama.domain.repository.ChatRepository
+import ru.macdroid.ollama.presentation.analytics.AnalyticsViewModel
 import ru.macdroid.ollama.presentation.chat.ChatViewModel
 import ru.macdroid.ollama.presentation.settings.SettingsViewModel
 import java.util.concurrent.TimeUnit
@@ -81,7 +88,23 @@ val appModule = module {
         )
     }
 
+    // Analytics
+    single { TokenBudgetManager() }
+    single { DataSampler() }
+    single { ContextBuilder(get(), get()) }
+    single { StatisticsCalculator() }
+    single<AnalyticsRepository> {
+        AnalyticsRepositoryImpl(
+            context = androidContext(),
+            llmEngine = get(),
+            modelManager = get(),
+            contextBuilder = get(),
+            statisticsCalculator = get()
+        )
+    }
+
     // ViewModels
     viewModel { ChatViewModel(get(), get()) }
     viewModel { SettingsViewModel(get(), get(), get()) }
+    viewModel { AnalyticsViewModel(get()) }
 }

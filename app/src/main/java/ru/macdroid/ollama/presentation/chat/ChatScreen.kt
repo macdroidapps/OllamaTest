@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Settings
@@ -56,6 +57,7 @@ import ru.macdroid.ollama.domain.model.Message
 @Composable
 fun ChatScreen(
     onNavigateToSettings: () -> Unit,
+    onNavigateToAnalytics: () -> Unit = {},
     viewModel: ChatViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -98,6 +100,12 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onNavigateToAnalytics) {
+                        Icon(
+                            imageVector = Icons.Default.Analytics,
+                            contentDescription = "Analytics"
+                        )
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,

@@ -1,0 +1,70 @@
+2024-01-15 08:00:01 INFO [Main] Application starting...
+2024-01-15 08:00:02 INFO [Config] Loading configuration from /etc/app/config.yaml
+2024-01-15 08:00:02 DEBUG [Config] Database host: db.example.com
+2024-01-15 08:00:03 INFO [Database] Connecting to PostgreSQL...
+2024-01-15 08:00:03 INFO [Database] Connection pool initialized (min=5, max=20)
+2024-01-15 08:00:04 INFO [Cache] Redis connection established
+2024-01-15 08:00:04 INFO [Main] Server started on port 8080
+2024-01-15 08:01:15 INFO [API] GET /api/users - 200 - 45ms - user_id=101
+2024-01-15 08:01:16 INFO [API] GET /api/products - 200 - 32ms - user_id=101
+2024-01-15 08:01:45 INFO [API] POST /api/cart - 201 - 67ms - user_id=101
+2024-01-15 08:02:01 WARN [Cache] Cache miss for key: product_456
+2024-01-15 08:02:02 INFO [API] GET /api/products/456 - 200 - 120ms - user_id=102
+2024-01-15 08:02:30 INFO [API] POST /api/auth/login - 200 - 89ms - user_id=103
+2024-01-15 08:02:31 INFO [Auth] User 103 authenticated successfully
+2024-01-15 08:03:00 ERROR [API] POST /api/orders - 500 - 234ms - user_id=101 - Database timeout
+2024-01-15 08:03:01 ERROR [Database] Connection timeout after 30s
+2024-01-15 08:03:02 WARN [Database] Retrying connection (attempt 1/3)
+2024-01-15 08:03:05 INFO [Database] Connection restored
+2024-01-15 08:03:10 INFO [API] POST /api/orders - 201 - 156ms - user_id=101
+2024-01-15 08:04:00 INFO [API] GET /api/users/profile - 200 - 28ms - user_id=103
+2024-01-15 08:04:15 INFO [API] PUT /api/users/profile - 200 - 45ms - user_id=103
+2024-01-15 08:05:00 WARN [Auth] Failed login attempt for user: admin@example.com
+2024-01-15 08:05:01 WARN [Auth] Failed login attempt for user: admin@example.com
+2024-01-15 08:05:02 WARN [Auth] Failed login attempt for user: admin@example.com
+2024-01-15 08:05:03 ERROR [Auth] Account locked: admin@example.com (3 failed attempts)
+2024-01-15 08:06:00 INFO [API] GET /api/products - 200 - 25ms - user_id=104
+2024-01-15 08:06:30 INFO [API] GET /api/products/123 - 200 - 18ms - user_id=104
+2024-01-15 08:06:45 INFO [API] POST /api/cart - 201 - 52ms - user_id=104
+2024-01-15 08:07:00 INFO [API] GET /api/cart - 200 - 23ms - user_id=104
+2024-01-15 08:07:30 INFO [API] POST /api/orders - 201 - 178ms - user_id=104
+2024-01-15 08:07:31 INFO [Payment] Payment processed: order_789, amount=150.00
+2024-01-15 08:08:00 DEBUG [Cache] Cache hit ratio: 78%
+2024-01-15 08:08:01 INFO [Metrics] Active users: 4, Requests/min: 15
+2024-01-15 08:09:00 INFO [API] GET /api/orders/789 - 200 - 34ms - user_id=104
+2024-01-15 08:10:00 ERROR [API] GET /api/products/999 - 404 - 12ms - user_id=105 - Product not found
+2024-01-15 08:10:30 INFO [API] GET /api/products - 200 - 29ms - user_id=105
+2024-01-15 08:11:00 INFO [API] POST /api/auth/login - 200 - 76ms - user_id=106
+2024-01-15 08:11:15 INFO [API] GET /api/users/profile - 200 - 22ms - user_id=106
+2024-01-15 08:12:00 WARN [Memory] Heap usage above 80%: 82%
+2024-01-15 08:12:01 INFO [GC] Running garbage collection...
+2024-01-15 08:12:02 INFO [GC] Freed 256MB, heap usage now 54%
+2024-01-15 08:13:00 INFO [API] DELETE /api/cart/item/123 - 200 - 38ms - user_id=101
+2024-01-15 08:13:30 INFO [API] GET /api/cart - 200 - 19ms - user_id=101
+2024-01-15 08:14:00 INFO [API] POST /api/orders - 201 - 145ms - user_id=101
+2024-01-15 08:14:01 INFO [Payment] Payment processed: order_790, amount=89.99
+2024-01-15 08:15:00 INFO [Scheduler] Running cleanup task...
+2024-01-15 08:15:05 INFO [Scheduler] Deleted 45 expired sessions
+2024-01-15 08:16:00 ERROR [API] POST /api/payment - 402 - 89ms - user_id=107 - Payment declined
+2024-01-15 08:16:01 INFO [Payment] Card declined for user 107
+2024-01-15 08:17:00 INFO [API] GET /api/products - 200 - 31ms - user_id=108
+2024-01-15 08:17:30 INFO [API] POST /api/cart - 201 - 48ms - user_id=108
+2024-01-15 08:18:00 INFO [API] GET /api/recommendations - 200 - 156ms - user_id=108
+2024-01-15 08:19:00 INFO [Metrics] Active users: 6, Requests/min: 22
+2024-01-15 08:20:00 INFO [API] POST /api/auth/logout - 200 - 15ms - user_id=103
+2024-01-15 08:20:01 INFO [Auth] User 103 logged out
+2024-01-15 08:21:00 WARN [API] GET /api/admin/users - 403 - 8ms - user_id=108 - Access denied
+2024-01-15 08:22:00 INFO [API] GET /api/products/search?q=phone - 200 - 89ms - user_id=108
+2024-01-15 08:22:30 INFO [API] GET /api/products/234 - 200 - 24ms - user_id=108
+2024-01-15 08:23:00 INFO [API] POST /api/cart - 201 - 55ms - user_id=108
+2024-01-15 08:24:00 ERROR [Database] Deadlock detected in transaction
+2024-01-15 08:24:01 WARN [Database] Rolling back transaction
+2024-01-15 08:24:02 INFO [Database] Transaction retried successfully
+2024-01-15 08:25:00 INFO [API] POST /api/orders - 201 - 167ms - user_id=108
+2024-01-15 08:25:01 INFO [Payment] Payment processed: order_791, amount=599.00
+2024-01-15 08:26:00 INFO [Email] Sent order confirmation to user 108
+2024-01-15 08:27:00 INFO [API] GET /api/orders - 200 - 45ms - user_id=101
+2024-01-15 08:28:00 INFO [Metrics] Active users: 5, Requests/min: 18
+2024-01-15 08:29:00 INFO [Cache] Cache cleanup: removed 120 expired entries
+2024-01-15 08:30:00 INFO [Health] System health check: OK
+2024-01-15 08:30:01 DEBUG [Health] CPU: 34%, Memory: 58%, Disk: 42%
